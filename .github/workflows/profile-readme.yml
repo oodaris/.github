@@ -1,0 +1,83 @@
+# Checks the organization profile (profile/README.md), which github.com/oodaris shows.
+# On a pull request or a push to main that touches it: every image it uses exists, and every link answers.
+# Every Monday: the same checks, and an issue when oodaris.ai's content is newer than the profile.
+name: Profile README
+
+on:
+  pull_request:
+    paths:
+      - 'profile/**'
+      - '.github/workflows/profile-readme.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'profile/**'
+  schedule:
+    - cron: '17 13 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    name: Images and links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check every image and link in the profile
+        run: |
+          status=0
+          if ! grep -qE 'llms-full\.txt, last updated [0-9]{4}-[0-9]{2}-[0-9]{2}' profile/README.md; then
+            echo "::error file=profile/README.md::The comment with the date of the llms-full.txt the profile was checked against is missing"
+            status=1
+          fi
+          while read -r path; do
+            if [ ! -f "profile/$path" ]; then
+              echo "::error file=profile/README.md::profile/$path does not exist"
+              status=1
+            fi
+          done < <(grep -oE '(src|srcset)="\./[^"]+"' profile/README.md | sed -E 's/^[a-z]+="\.\///; s/"$//' | sort -u)
+          # LinkedIn and Amazon refuse scripted requests, so their links are not checked.
+          while read -r url; do
+            if ! code=$(curl -sS -o /dev/null -w '%{http_code}' -L --max-time 30 "$url"); then
+              echo "::error file=profile/README.md::$url could not be fetched"
+              status=1
+            elif [ "$code" -ge 400 ]; then
+              echo "::error file=profile/README.md::$url answered $code"
+              status=1
+            fi
+          done < <(grep -oE 'https://[^ )"<>`]+' profile/README.md | sed -E 's/[.,;:]+$//' | grep -vE '://(www\.)?(linkedin|amazon)\.com' | sort -u)
+          exit "$status"
+
+  site:
+    name: oodaris.ai is not newer
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Open an issue when the site's content is newer than the profile
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsS --max-time 30 -o "$RUNNER_TEMP/llms-full.txt" https://oodaris.ai/llms-full.txt
+          site=$(grep -m1 -oE '^Last updated: [0-9]{4}-[0-9]{2}-[0-9]{2}' "$RUNNER_TEMP/llms-full.txt" | grep -oE '[0-9-]{10}$')
+          profile=$(grep -m1 -oE 'llms-full\.txt, last updated [0-9]{4}-[0-9]{2}-[0-9]{2}' profile/README.md | grep -oE '[0-9-]{10}$')
+          echo "oodaris.ai content: $site. Profile checked against: $profile."
+          if [ -z "$site" ] || [ -z "$profile" ]; then
+            echo "::error::Could not read one of the two dates"
+            exit 1
+          fi
+          if [[ "$site" > "$profile" ]]; then
+            open=$(gh issue list --state open --search 'in:title "Profile README:"' --json number --jq 'length')
+            if [ "$open" = 0 ]; then
+              gh issue create --title "Profile README: oodaris.ai changed on $site" --body-file - <<EOF
+          The content of oodaris.ai ([llms-full.txt](https://oodaris.ai/llms-full.txt)) was last updated on $site. The organization profile was last checked against the version of $profile.
+
+          Compare \`profile/README.md\` with the site, update what changed, and set the date in the comment at the end of the profile. The checklist is in this repository's README.
+          EOF
+            fi
+          fi
