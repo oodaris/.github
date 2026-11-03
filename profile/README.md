@@ -3,7 +3,7 @@
   <img src="./assets/banner-light.svg" width="830" alt="OODARIS AI. Built in retail. Not built for. The Agentic OS for Retail Decisions.">
 </picture>
 
-OODARIS is the Agentic OS for Retail Decisions, for fashion and footwear retailers. Every night it checks plan, stock, sell-through and price, explains what moved, and proposes a fix with its expected margin. By default, nothing is written back to your systems until the person who owns the decision approves it.
+OODARIS is an agentic operating system for fashion and footwear retail. Every night it checks plan, stock, sell-through and price, explains what moved, and proposes a fix with its expected margin. By default, nothing is written back to your systems until the person who owns the decision approves it.
 
 ## One decision, end to end
 
@@ -12,24 +12,24 @@ OODARIS is the Agentic OS for Retail Decisions, for fashion and footwear retaile
   <img src="./assets/decision-light.svg" width="640" alt="Worked example, drawn as a pipe that stops at a gate. 04:15: CL-03 is 6.8 percentage points under plan. 06:30: Move CL-03 to markdown ladder B, +$61,400 expected gross-margin dollars, reversible for 14 days. The gate is the approver. Approved by: Merchandise planning. Merchandise finance clears the margin limit. Past the gate the pipe is empty. It leads to price conditions in SAP S/4HANA for 214 SKUs, markdown ladder B for 18 doors in CL-03, and decision ledger entry 4417. By default, nothing is written back until someone approves.">
 </picture>
 
-[Watch this decision get made](https://oodaris.ai/en#home-agentic-monday) on oodaris.ai.
+The numbers are illustrative. [Watch this decision get made](https://oodaris.ai/en#home-agentic-monday) on oodaris.ai.
 
 ## Ten capabilities
 
 All ten are available and run on one data model, so each one you add reuses the same data and integrations.
 
-| Stage | Capability | What OODARIS proposes |
-| --- | --- | --- |
-| Plan | Demand forecasting | Demand curves by style, store and week, with what moved them |
-| Plan | MFP & OTB | Season targets for sales, margin, receipts and inventory, and the budget left to buy by department, channel and month |
-| Plan | Assortment planning & optimization | Which styles go to which store clusters, and how deep |
-| Buy | Purchase orders & procurement | Order splits, alternate suppliers or new terms when a supplier slips |
-| Buy | Sizing & prepacking | Size curves and pack builds for each store cluster |
-| Flow | Allocation planning & optimization | Units by store and size run |
-| Flow | Replenishment | The daily replenishment order, within pack, minimum-order and vendor rules |
-| Flow | Transfers | Store-to-store transfers before a size run breaks |
-| Sell | Pricing, markdown & promotions | Price ladders inside MAP, MSRP and margin floors, markdown depth and timing, and offer depth and audience for each campaign |
-| Sell | Order fulfillment | Routing each online order to the warehouse or store best placed to ship it |
+| Capability | What OODARIS proposes |
+| --- | --- |
+| Plan: Demand forecasting | Demand curves by style, store and week, with what moved them |
+| Plan: MFP & OTB | Season targets for sales, margin, receipts and inventory, and the budget left to buy by department, channel and month |
+| Plan: Assortment planning & optimization | Which styles go to which store clusters, and how deep |
+| Buy: Purchase orders & procurement | Order splits, alternate suppliers or new terms when a supplier slips |
+| Buy: Sizing & prepacking | Size curves and pack builds for each store cluster |
+| Flow: Allocation planning & optimization | Units by store and size run |
+| Flow: Replenishment | The daily replenishment order, within pack, minimum-order and vendor rules |
+| Flow: Transfers | Store-to-store transfers before a size run breaks |
+| Sell: Pricing, markdown & promotions | Price ladders inside MAP, MSRP and margin floors, markdown depth and timing, and offer depth and audience for each campaign |
+| Sell: Order fulfillment | Routing each online order to the warehouse or store best placed to ship it |
 
 [Twelve specialist agents](https://oodaris.ai/en/agents) work in these stages, and each proposes a change with its evidence. The AI Orchestrator connects them. It proposes the order of work, and a resolution when two agents disagree. It approves nothing.
 
@@ -37,13 +37,13 @@ All ten are available and run on one data model, so each one you add reuses the 
 
 Every decision moves through five stages, with a contract between each.
 
-| Stage | Contract | Runs on |
-| --- | --- | --- |
-| 1. Assemble context | Product, location, calendar, inventory, plan and policy context | Canonical data contracts |
-| 2. Scope and route work | A bounded task for an agent, model, optimizer or enterprise service | Coordinator and shared context |
-| 3. Generate a recommendation | A proposed action, with its rationale and stated confidence | Models, optimization, and rules |
-| 4. Review and approve | A policy check against limits and confidence thresholds, then approval | Policy gate and human approval |
-| 5. Write back and learn | Writeback, then the outcome against the expected result | APIs, events, and audit trail |
+| Stage | Contract |
+| --- | --- |
+| 1. Assemble context | Product, location, calendar, inventory, plan and policy context |
+| 2. Scope and route work | A bounded task for an agent, model, optimizer or enterprise service |
+| 3. Generate a recommendation | A proposed action from models, optimization and rules, with its rationale and stated confidence |
+| 4. Review and approve | A policy check against limits and confidence thresholds, then approval: by default, a person signs here |
+| 5. Write back and learn | Writeback, recorded in the audit trail, then the outcome against the expected result |
 
 One trace ID links the source inputs, the agent and model runs, the approval, the writeback and the outcome, and each writeback has a rollback path.
 
@@ -67,6 +67,8 @@ Access is identity- and role-based, data is encrypted, and each customer's data 
 
 ## Measured results
 
+Merchandise financial planning and open-to-buy run in production today.
+
 - +4–8% gross-margin dollars, from the same inventory
 - −8–12pp discount depth, with units still cleared
 - +1–3pp margin rate, from more deliberate discounting
@@ -86,16 +88,11 @@ Each has a free sample at [fatihnayebi.com](https://fatihnayebi.com/books/). The
 
 ## For developers
 
-Three read-only JSON endpoints need no authentication and accept only `GET`.
+The website's three public `GET` endpoints return company information, capability descriptions and example uses. They need no authentication.
 
-```console
-$ curl -s https://oodaris.ai/api/services | jq '.[0]'
-{
-  "id": 1,
-  "stage": "plan",
-  "name": "Demand forecasting",
-  "description": "Demand curves by style, store and week, with what moved them. Available to new clients."
-}
+```sh
+curl -s https://oodaris.ai/api/services | jq -c '.[0] | {id, stage, name}'
+# {"id":1,"stage":"plan","name":"Demand forecasting"}
 ```
 
 - [`openapi.yaml`](https://oodaris.ai/openapi.yaml) describes the endpoints, [`agents-directory.json`](https://oodaris.ai/agents-directory.json) every agent, and [`llms.txt`](https://oodaris.ai/llms.txt) the site.
@@ -107,10 +104,10 @@ Full-time roles in Montréal or remote anywhere in Canada, with core hours on Ea
 
 - [AI Engineer](https://oodaris.ai/en/careers/ai-engineer): build the agents that run every night in production, and the evaluations and tracing that show whether their proposals are right.
 - [Full Stack Engineer](https://oodaris.ai/en/careers/full-stack-engineer): build the screens where planners review, question and approve what our agents propose, and the typed APIs behind them.
-- [AI Product Manager](https://oodaris.ai/en/careers/ai-product-manager): own one of our planning decisions end to end.
+- [AI Product Manager](https://oodaris.ai/en/careers/ai-product-manager): work with planners, decide what we build next and measure whether it gets used.
 - [Founding Account Executive](https://oodaris.ai/en/careers/founding-account-executive): be our first salesperson.
 
-The stack is asynchronous Python and FastAPI, Postgres with vector search, Redis, Docker, OpenTelemetry, React 19 and TypeScript. Apply on each role's page, or write to [careers@oodaris.ai](mailto:careers@oodaris.ai).
+The stack is asynchronous Python and FastAPI, Postgres with vector search, Redis, Docker, OpenTelemetry, React 19 and TypeScript. Apply on each role's page, or write to [careers@oodaris.ai](mailto:careers@oodaris.ai). [Hiring](https://oodaris.ai/en/careers) takes five steps: an intro call, past work, a working session, meeting the team and a conversation with the founder.
 
 ## Contact
 

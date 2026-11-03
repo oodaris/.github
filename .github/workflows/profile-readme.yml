@@ -40,9 +40,11 @@ jobs:
           done < <(grep -oE '(src|srcset)="\./[^"]+"' profile/README.md | sed -E 's/^[a-z]+="\.\///; s/"$//' | sort -u)
           # LinkedIn and Amazon refuse scripted requests, so their links are not checked.
           while read -r url; do
-            code=$(curl -sS -o /dev/null -w '%{http_code}' -L --max-time 30 "$url" || true)
-            if [ -z "$code" ] || [ "$code" = 000 ] || [ "$code" -ge 400 ]; then
-              echo "::error file=profile/README.md::$url answered ${code:-nothing}"
+            if ! code=$(curl -sS -o /dev/null -w '%{http_code}' -L --max-time 30 "$url"); then
+              echo "::error file=profile/README.md::$url could not be fetched"
+              status=1
+            elif [ "$code" -ge 400 ]; then
+              echo "::error file=profile/README.md::$url answered $code"
               status=1
             fi
           done < <(grep -oE 'https://[^ )"<>`]+' profile/README.md | sed -E 's/[.,;:]+$//' | grep -vE '://(www\.)?(linkedin|amazon)\.com' | sort -u)
